@@ -1,16 +1,15 @@
-"""Operações de leitura e escrita relacionadas aos sensores."""
+"""Operações de leitura e escrita no PostgreSQL."""
 
 from datetime import datetime
 import psycopg
+from app.simulator.sensor import Sensor
 
-def get_sensor_by_id(
+
+def get_active_sensors(
     connection: psycopg.Connection,
-    sensor_id: int,
-):
+) -> list[Sensor]:
     """
-    Busca um sensor pelo seu ID.
-    Retorna os dados do sensor quando encontrado.
-    Caso contrário, retorna None.
+    Busca todos os sensores ativos cadastrados no banco.
     """
 
     query = """
@@ -23,11 +22,29 @@ def get_sensor_by_id(
             status,
             user_id
         FROM sensors
-        WHERE sensor_id = %s;
+        WHERE status = 'active'
+        ORDER BY sensor_id;
     """
 
-    result = connection.execute(query, (sensor_id,)).fetchone()
-    return result
+    rows = connection.execute(query).fetchall()
+
+    sensors = []
+
+    for row in rows:
+        sensors.append(
+            Sensor(
+                sensor_id=row[0],
+                name=row[1],
+                latitude=float(row[2]),
+                longitude=float(row[3]),
+                region=row[4],
+                status=row[5],
+                user_id=row[6],
+            )
+        )
+
+    return sensors
+
 
 def insert_reading(
     connection: psycopg.Connection,
@@ -36,9 +53,10 @@ def insert_reading(
     noise_db: float,
 ) -> None:
     """
-    Insere uma nova leitura vinculada a um sensor.
-    O sensor_id recebido aqui é justamente o identificador
-    do sensor que originou a coleta.
+    Salva uma leitura no banco.
+
+    A leitura é explicitamente vinculada ao sensor através
+    do sensor_id.
     """
 
     query = """
@@ -58,4 +76,5 @@ def insert_reading(
             noise_db,
         ),
     )
+
     connection.commit()

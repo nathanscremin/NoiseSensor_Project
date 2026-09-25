@@ -1,14 +1,11 @@
-"""Representação de um sensor utilizado pelo simulador."""
+"""Modelo que representa um sensor do sistema."""
 
 from dataclasses import dataclass
 
 @dataclass
-class SimulatedSensor:
+class Sensor:
     """
-    Representa um sensor que está sendo simulado.
-    O sensor_id é sua identidade dentro do banco.
-    Todas as leituras produzidas por este objeto utilizarão
-    esse mesmo identificador.
+    Representa um sensor cadastrado no banco de dados.
     """
 
     sensor_id: int

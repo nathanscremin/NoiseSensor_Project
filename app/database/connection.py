@@ -1,16 +1,14 @@
-"""Responsável pela conexão com o PostgreSQL."""
+"""Configuração e conexão com o PostgreSQL."""
 
 import os
 import psycopg
 from dotenv import load_dotenv
 
-# Carrega as variáveis definidas no arquivo .env.
 load_dotenv()
 
 def create_connection() -> psycopg.Connection:
     """
-    Cria uma conexão com o PostgreSQL usando as configurações
-    definidas nas variáveis de ambiente.
+    Cria uma conexão com o banco PostgreSQL.
     """
 
     return psycopg.connect(
