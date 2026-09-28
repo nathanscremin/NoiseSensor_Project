@@ -1,12 +1,15 @@
-"""Serviço de inferência do modelo."""
+"""Serviço responsável pelas previsões do modelo."""
 
 from datetime import datetime, timedelta, timezone
+from time import sleep
 from zoneinfo import ZoneInfo
 
 from app.database.connection import create_connection
 from app.database.repository import (
+    create_prediction_run,
     get_active_sensors,
     get_hourly_readings,
+    insert_predictions,
 )
 
 from app.model.aggregation import (
@@ -15,8 +18,9 @@ from app.model.aggregation import (
 )
 
 from app.model.predictor import (
-    load_model,
     forecast_sensor,
+    load_model,
+    load_model_metadata,
 )
 
 
@@ -30,16 +34,27 @@ HISTORY_HOURS = 24
 
 class ModelService:
     """
-    Serviço responsável pela execução periódica
-    das previsões.
+    Serviço responsável pela execução do modelo.
+
+    O modelo salvo é carregado uma vez e utilizado
+    para gerar novas previsões periodicamente.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.model = load_model()
+        self.metadata = load_model_metadata()
 
-    def collect_history(self, connection):
+        self.model_version = self.metadata[
+            "model_version"
+        ]
+
+    def collect_history(
+        self,
+        connection,
+    ):
         """
-        Busca as últimas 24 horas completas.
+        Busca as últimas 24 horas completas
+        para alimentar o modelo.
         """
 
         now_local = datetime.now(
@@ -54,7 +69,9 @@ class ModelService:
 
         start_local = (
             end_local
-            - timedelta(hours=HISTORY_HOURS)
+            - timedelta(
+                hours=HISTORY_HOURS
+            )
         )
 
         start_utc = (
@@ -81,16 +98,26 @@ class ModelService:
             hourly
         )
 
-    def predict(self):
+    def predict_once(self) -> None:
         """
-        Executa uma rodada completa de previsão.
+        Executa uma rodada completa de previsão
+        e salva os resultados no PostgreSQL.
         """
+
+        print(
+            "\nIniciando nova rodada de previsão..."
+        )
 
         with create_connection() as connection:
 
             sensors = get_active_sensors(
                 connection
             )
+
+            if not sensors:
+                raise RuntimeError(
+                    "Nenhum sensor ativo encontrado."
+                )
 
             hourly = self.collect_history(
                 connection
@@ -117,33 +144,102 @@ class ModelService:
                     predictions
                 )
 
-            return all_predictions
+            if not all_predictions:
+                raise RuntimeError(
+                    "Nenhuma previsão foi gerada."
+                )
 
+            run_id = create_prediction_run(
+                connection=connection,
+                model_version=self.model_version,
+            )
 
-def main():
-    """
-    Ponto de entrada do serviço de inferência.
-    """
+            insert_predictions(
+                connection=connection,
+                run_id=run_id,
+                predictions=all_predictions,
+            )
 
-    service = ModelService()
+            print(
+                f"Previsão concluída."
+            )
 
-    print(
-        "Serviço de previsão iniciado."
-    )
+            print(
+                f"Run ID: {run_id}"
+            )
 
-    # Inicialmente faremos uma única execução
-    # para testar toda a integração.
-    predictions = service.predict()
+            print(
+                f"Modelo: {self.model_version}"
+            )
 
-    for prediction in predictions:
+            print(
+                f"Total de previsões: "
+                f"{len(all_predictions)}"
+            )
+
+    def wait_until_next_hour(self) -> None:
+        """
+        Aguarda até o início da próxima hora.
+        """
+
+        now = datetime.now(
+            LOCAL_ZONE
+        )
+
+        next_hour = (
+            now.replace(
+                minute=0,
+                second=0,
+                microsecond=0,
+            )
+            + timedelta(hours=1)
+        )
+
+        seconds_to_wait = (
+            next_hour - now
+        ).total_seconds()
 
         print(
-            f"Sensor {prediction.sensor_id} | "
-            f"{prediction.target_timestamp} | "
-            f"+{prediction.horizon_hours}h | "
-            f"{prediction.predicted_noise_db:.2f} dB"
+            f"Próxima previsão em "
+            f"{seconds_to_wait:.0f} segundos."
         )
+
+        sleep(
+            seconds_to_wait
+        )
+
+    def run(self) -> None:
+        """
+        Mantém o serviço de previsão em execução.
+
+        A primeira rodada acontece imediatamente.
+        Depois, uma nova rodada acontece a cada hora.
+        """
+
+        print(
+            "ModelService iniciado."
+        )
+
+        print(
+            f"Modelo carregado: "
+            f"{self.model_version}"
+        )
+
+        while True:
+
+            try:
+                self.predict_once()
+
+            except Exception as error:
+                print(
+                    "\nErro durante a previsão:"
+                )
+
+                print(error)
+
+            self.wait_until_next_hour()
 
 
 if __name__ == "__main__":
-    main()
+    service = ModelService()
+    service.run()

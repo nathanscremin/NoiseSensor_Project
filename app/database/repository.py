@@ -172,3 +172,56 @@ def create_prediction_run(
         )
 
     return row[0]
+
+
+def insert_predictions(
+    connection: psycopg.Connection,
+    run_id: int,
+    predictions,
+) -> None:
+    """
+    Salva todas as previsões de uma execução do modelo.
+
+    As previsões são vinculadas ao run_id recebido.
+    """
+
+    query = """
+        INSERT INTO predictions (
+            run_id,
+            sensor_id,
+            target_timestamp,
+            horizon_hours,
+            predicted_noise_db
+        )
+        VALUES (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s
+        );
+    """
+
+    rows = [
+        (
+            run_id,
+            prediction.sensor_id,
+            prediction.target_timestamp,
+            prediction.horizon_hours,
+            prediction.predicted_noise_db,
+        )
+        for prediction in predictions
+    ]
+
+    if not rows:
+        raise ValueError(
+            "Nenhuma previsão foi fornecida para salvar."
+        )
+
+    with connection.cursor() as cursor:
+        cursor.executemany(
+            query,
+            rows,
+        )
+
+    connection.commit()

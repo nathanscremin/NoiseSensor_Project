@@ -6,6 +6,7 @@ from math import isnan
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import json
 import joblib
 import pandas as pd
 
@@ -30,6 +31,11 @@ MODEL_PATH = (
     "noise_model.joblib"
 )
 
+METADATA_PATH = (
+    PROJECT_ROOT
+    / "models"
+    / "metadata.json"
+)
 
 @dataclass
 class Prediction:
@@ -59,6 +65,23 @@ def load_model():
         MODEL_PATH
     )
 
+def load_model_metadata() -> dict:
+    """
+    Carrega os metadados do modelo salvo.
+    """
+
+    if not METADATA_PATH.exists():
+        raise FileNotFoundError(
+            "Metadados do modelo não encontrados em: "
+            f"{METADATA_PATH}"
+        )
+
+    with open(
+        METADATA_PATH,
+        "r",
+        encoding="utf-8",
+    ) as file:
+        return json.load(file)
 
 def forecast_sensor(
     model,
@@ -150,3 +173,4 @@ def forecast_sensor(
         )
 
     return predictions
+
