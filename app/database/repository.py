@@ -1,7 +1,9 @@
 """Operações de leitura e escrita no PostgreSQL."""
 
 from datetime import datetime
+
 import psycopg
+
 from app.simulator.sensor import Sensor
 
 
@@ -55,8 +57,8 @@ def insert_reading(
     """
     Salva uma leitura no banco.
 
-    A leitura é explicitamente vinculada ao sensor através
-    do sensor_id.
+    A leitura é explicitamente vinculada ao sensor
+    através do sensor_id.
     """
 
     query = """
@@ -78,3 +80,95 @@ def insert_reading(
     )
 
     connection.commit()
+
+
+def get_hourly_readings(
+    connection: psycopg.Connection,
+    start: datetime,
+    end: datetime,
+) -> list[tuple]:
+    """
+    Busca estatísticas horárias das leituras dos sensores.
+
+    O intervalo considera:
+
+        start -> inclusivo
+        end   -> exclusivo
+    """
+
+    query = """
+        SELECT
+            sr.sensor_id,
+            s.region,
+
+            DATE_TRUNC(
+                'hour',
+                sr.read_timestamp AT TIME ZONE 'America/Sao_Paulo'
+            ) AS hour,
+
+            AVG(sr.noise_db)::double precision
+                AS avg_noise_db,
+
+            MIN(sr.noise_db)::double precision
+                AS min_noise_db,
+
+            MAX(sr.noise_db)::double precision
+                AS max_noise_db,
+
+            STDDEV_POP(sr.noise_db)::double precision
+                AS std_noise_db,
+
+            COUNT(*) AS reading_count
+
+        FROM sensors_readings AS sr
+
+        INNER JOIN sensors AS s
+            ON s.sensor_id = sr.sensor_id
+
+        WHERE sr.read_timestamp >= %s
+          AND sr.read_timestamp < %s
+
+        GROUP BY
+            sr.sensor_id,
+            s.region,
+            hour
+
+        ORDER BY
+            sr.sensor_id,
+            hour;
+    """
+
+    return connection.execute(
+        query,
+        (start, end),
+    ).fetchall()
+
+
+def create_prediction_run(
+    connection: psycopg.Connection,
+    model_version: str,
+) -> int:
+    """
+    Cria um registro representando uma execução do modelo
+    e retorna o ID dessa execução.
+    """
+
+    query = """
+        INSERT INTO prediction_runs (
+            model_version
+        )
+        VALUES (%s)
+        RETURNING run_id;
+    """
+
+    row = connection.execute(
+        query,
+        (model_version,),
+    ).fetchone()
+
+    if row is None:
+        raise RuntimeError(
+            "Não foi possível criar a execução de previsão."
+        )
+
+    return row[0]

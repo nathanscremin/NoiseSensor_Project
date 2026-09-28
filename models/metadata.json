@@ -1,0 +1,59 @@
+{
+    "model_version": "v1",
+    "trained_at": "2026-09-28T16:54:18.376172+00:00",
+    "algorithm": "RandomForestRegressor",
+    "sklearn_version": "1.9.1",
+    "training_days": 365,
+    "history_hours": 24,
+    "forecast_horizon_hours": 24,
+    "validation_metrics": {
+        "random_forest": {
+            "mae": 0.6842789697961125,
+            "rmse": 0.8659370758296384
+        }
+    },
+    "test_metrics": {
+        "mae": 0.7041347888842465,
+        "rmse": 0.9763562675004097
+    },
+    "baseline_metrics": {
+        "mae": 1.9882970737913486,
+        "rmse": 3.185286758434876
+    },
+    "features": [
+        "sensor_id",
+        "region",
+        "target_hour",
+        "target_weekday",
+        "target_month",
+        "is_weekend",
+        "noise_1h_ago",
+        "noise_2h_ago",
+        "noise_3h_ago",
+        "noise_4h_ago",
+        "noise_5h_ago",
+        "noise_6h_ago",
+        "noise_7h_ago",
+        "noise_8h_ago",
+        "noise_9h_ago",
+        "noise_10h_ago",
+        "noise_11h_ago",
+        "noise_12h_ago",
+        "noise_13h_ago",
+        "noise_14h_ago",
+        "noise_15h_ago",
+        "noise_16h_ago",
+        "noise_17h_ago",
+        "noise_18h_ago",
+        "noise_19h_ago",
+        "noise_20h_ago",
+        "noise_21h_ago",
+        "noise_22h_ago",
+        "noise_23h_ago",
+        "noise_24h_ago",
+        "rolling_mean_3",
+        "rolling_mean_6",
+        "rolling_mean_24",
+        "rolling_std_6"
+    ]
+}
