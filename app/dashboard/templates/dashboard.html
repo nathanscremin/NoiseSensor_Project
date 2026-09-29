@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NoiseSensor Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <main class="dashboard">
+
+        <header class="dashboard-header">
+            <div>
+                <h1>NoiseSensor</h1>
+                <p>Monitoramento de ruído</p>
+            </div>
+
+            <div class="connection-status">
+                <span id="connection-indicator"></span>
+                <span id="connection-text">
+                    Conectando...
+                </span>
+            </div>
+        </header>
+
+        <section>
+            <h2>Sensores</h2>
+
+            <div id="sensors-container" class="sensors-container">
+                <p class="loading">
+                    Carregando sensores...
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="{{ url_for('static', path='js/dashboard.js') }}"></script>
+
+</body>
+
+</html>

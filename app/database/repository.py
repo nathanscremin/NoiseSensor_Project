@@ -225,3 +225,81 @@ def insert_predictions(
         )
 
     connection.commit()
+
+def get_latest_sensor_readings(
+    connection: psycopg.Connection,
+) -> list[tuple]:
+    """Retorna a leitura mais recente de cada sensor."""
+
+    query = """
+        SELECT
+            s.sensor_id,
+            s.name,
+            s.region,
+            s.status,
+            sr.noise_db,
+            sr.read_timestamp
+        FROM sensors AS s
+        INNER JOIN sensors_readings AS sr
+            ON sr.sensor_id = s.sensor_id
+        WHERE sr.read_timestamp = (
+            SELECT MAX(sr2.read_timestamp)
+            FROM sensors_readings AS sr2
+            WHERE sr2.sensor_id = s.sensor_id
+        )
+        ORDER BY s.sensor_id;
+    """
+
+    return connection.execute(query).fetchall()
+
+def get_sensor_history(
+    connection: psycopg.Connection,
+    sensor_id: int,
+    start: datetime,
+    end: datetime,
+) -> list[tuple]:
+    """Retorna o histórico horário de um sensor."""
+
+    query = """
+        SELECT
+            DATE_TRUNC(
+                'hour',
+                read_timestamp AT TIME ZONE 'America/Sao_Paulo'
+            ) AS hour,
+            AVG(noise_db)::double precision AS avg_noise_db,
+            MIN(noise_db)::double precision AS min_noise_db,
+            MAX(noise_db)::double precision AS max_noise_db,
+            COUNT(*) AS reading_count
+        FROM sensors_readings
+        WHERE sensor_id = %s
+          AND read_timestamp >= %s
+          AND read_timestamp < %s
+        GROUP BY hour
+        ORDER BY hour;
+    """
+
+    return connection.execute(
+        query,
+        (sensor_id, start, end),
+    ).fetchall()
+
+def get_sensor_predictions(
+    connection: psycopg.Connection,
+    sensor_id: int,
+) -> list[tuple]:
+    """Retorna as previsões atuais de um sensor."""
+
+    query = """
+        SELECT
+            target_timestamp,
+            horizon_hours,
+            predicted_noise_db
+        FROM current_predictions
+        WHERE sensor_id = %s
+        ORDER BY target_timestamp;
+    """
+
+    return connection.execute(
+        query,
+        (sensor_id,),
+    ).fetchall()

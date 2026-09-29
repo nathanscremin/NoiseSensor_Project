@@ -1,0 +1,106 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    color: #1f2933;
+}
+
+.dashboard {
+    width: min(1000px, 92%);
+    margin: 0 auto;
+    padding: 32px 0;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+}
+
+.dashboard-header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.dashboard-header p {
+    margin: 6px 0 0;
+    color: #667085;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #667085;
+}
+
+#connection-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #98a2b3;
+}
+
+.sensors-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sensor-card {
+    background: #ffffff;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.sensor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.sensor-name {
+    margin: 0;
+    font-size: 20px;
+}
+
+.sensor-region {
+    margin: 4px 0 0;
+    color: #667085;
+    font-size: 14px;
+}
+
+.sensor-noise {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.sensor-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #eaecf0;
+    color: #667085;
+    font-size: 13px;
+}
+
+.sensor-status {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #ecfdf3;
+    color: #027a48;
+    font-size: 12px;
+}
+
+.loading {
+    color: #667085;
+}
