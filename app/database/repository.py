@@ -235,6 +235,8 @@ def get_latest_sensor_readings(
         SELECT
             s.sensor_id,
             s.name,
+            s.latitude,
+            s.longitude,
             s.region,
             s.status,
             sr.noise_db,

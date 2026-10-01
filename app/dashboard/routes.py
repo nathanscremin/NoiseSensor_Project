@@ -28,10 +28,12 @@ def get_sensors():
             {
                 "sensor_id": row[0],
                 "name": row[1],
-                "region": row[2],
-                "status": row[3],
-                "noise_db": float(row[4]),
-                "read_timestamp": row[5].isoformat(),
+                "latitude": float(row[2]),
+                "longitude": float(row[3]),
+                "region": row[4],
+                "status": row[5],
+                "noise_db": float(row[6]),
+                "read_timestamp": row[7].isoformat(),
             }
         )
 

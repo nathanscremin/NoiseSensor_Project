@@ -60,6 +60,13 @@ body {
     padding: 20px;
 }
 
+.sensor-details-card {
+    background: #ffffff;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    padding: 20px;
+}
+
 .sensor-header {
     display: flex;
     justify-content: space-between;
@@ -103,4 +110,48 @@ body {
 
 .loading {
     color: #667085;
+}
+
+.map-section {
+    margin-bottom: 24px;
+}
+
+.map-section h2 {
+    margin-bottom: 12px;
+}
+
+#sensor-map {
+    width: 100%;
+    height: 500px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e4e7ec;
+}
+
+.sensor-details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.chart-section {
+    background: #ffffff;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.chart-section h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+}
+
+.chart-section canvas {
+    width: 100%;
 }

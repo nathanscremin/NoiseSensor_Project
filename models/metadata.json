@@ -1,24 +1,24 @@
 {
     "model_version": "v1",
-    "trained_at": "2026-09-28T16:54:18.376172+00:00",
+    "trained_at": "2026-10-01T17:04:47.534595+00:00",
     "algorithm": "RandomForestRegressor",
-    "sklearn_version": "1.9.1",
+    "sklearn_version": "1.7.2",
     "training_days": 365,
     "history_hours": 24,
     "forecast_horizon_hours": 24,
     "validation_metrics": {
         "random_forest": {
-            "mae": 0.6842789697961125,
-            "rmse": 0.8659370758296384
+            "mae": 0.6832816486560666,
+            "rmse": 0.865660438751311
         }
     },
     "test_metrics": {
-        "mae": 0.7041347888842465,
-        "rmse": 0.9763562675004097
+        "mae": 0.7118300315437966,
+        "rmse": 1.0146635851154353
     },
     "baseline_metrics": {
-        "mae": 1.9882970737913486,
-        "rmse": 3.185286758434876
+        "mae": 1.9994967948717952,
+        "rmse": 3.196972583354125
     },
     "features": [
         "sensor_id",
