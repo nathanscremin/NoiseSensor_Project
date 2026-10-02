@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Cadastro — NoiseSensor</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/auth.css') }}">
+</head>
+
+<body class="auth-page">
+
+    <main class="auth-container">
+
+        <section class="auth-card" aria-labelledby="register-title">
+
+            <header class="auth-header">
+
+                <p class="auth-brand">
+                    NoiseSensor
+                </p>
+
+                <h1 id="register-title">
+                    Criar conta
+                </h1>
+
+                <p>
+                    Crie sua conta para acessar o monitoramento.
+                </p>
+
+            </header>
+
+
+            <div id="auth-message" class="auth-message" hidden></div>
+
+
+            <form id="register-form" class="auth-form">
+
+                <div class="form-field">
+
+                    <label for="name">
+                        Nome
+                    </label>
+
+                    <input id="name" name="name" type="text" autocomplete="name" maxlength="100" required>
+
+                </div>
+
+
+                <div class="form-field">
+
+                    <label for="email">
+                        E-mail
+                    </label>
+
+                    <input id="email" name="email" type="email" autocomplete="email" required>
+
+                </div>
+
+
+                <div class="form-field">
+
+                    <label for="password">
+                        Senha
+                    </label>
+
+                    <input id="password" name="password" type="password" autocomplete="new-password" minlength="8"
+                        required>
+
+                </div>
+
+
+                <div class="form-field">
+
+                    <label for="confirm-password">
+                        Confirmar senha
+                    </label>
+
+                    <input id="confirm-password" name="confirm_password" type="password" autocomplete="new-password"
+                        minlength="8" required>
+
+                </div>
+
+
+                <button id="register-button" class="auth-button" type="submit">
+                    Criar conta
+                </button>
+
+            </form>
+
+
+            <p class="auth-footer">
+
+                Já possui uma conta?
+
+                <a href="/login">
+                    Entrar
+                </a>
+
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <script src="{{ url_for('static', path='js/cadastro.js') }}"></script>
+
+</body>
+
+</html>

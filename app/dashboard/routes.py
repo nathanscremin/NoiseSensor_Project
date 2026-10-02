@@ -1,8 +1,12 @@
 """Rotas HTTP do dashboard."""
 
-from fastapi import APIRouter
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+
+from fastapi import APIRouter, Depends
+
+from app.auth.dependencies import get_current_user
+from app.auth.models import User
 from app.database.connection import create_connection
 from app.database.repository import (
     get_latest_sensor_readings,
@@ -10,12 +14,18 @@ from app.database.repository import (
     get_sensor_predictions,
 )
 
+
 router = APIRouter()
 
 LOCAL_ZONE = ZoneInfo("America/Sao_Paulo")
 
+
 @router.get("/api/sensors")
-def get_sensors():
+def get_sensors(
+    _current_user: User = Depends(
+        get_current_user
+    ),
+):
     """Retorna a leitura mais recente de cada sensor."""
 
     with create_connection() as connection:
@@ -39,8 +49,16 @@ def get_sensors():
 
     return sensors
 
-@router.get("/api/sensors/{sensor_id}/history")
-def get_history(sensor_id: int):
+
+@router.get(
+    "/api/sensors/{sensor_id}/history"
+)
+def get_history(
+    sensor_id: int,
+    _current_user: User = Depends(
+        get_current_user
+    ),
+):
     """Retorna o histórico das últimas 24 horas."""
 
     end = datetime.now(timezone.utc)
@@ -71,8 +89,16 @@ def get_history(sensor_id: int):
 
     return history
 
-@router.get("/api/sensors/{sensor_id}/predictions")
-def get_predictions(sensor_id: int):
+
+@router.get(
+    "/api/sensors/{sensor_id}/predictions"
+)
+def get_predictions(
+    sensor_id: int,
+    _current_user: User = Depends(
+        get_current_user
+    ),
+):
     """Retorna as previsões atuais de um sensor."""
 
     with create_connection() as connection:

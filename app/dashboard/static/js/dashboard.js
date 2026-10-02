@@ -13,25 +13,129 @@ const connectionText =
         "connection-text"
     );
 
+const currentUserName =
+    document.getElementById(
+        "current-user-name"
+    );
 
-let sensors = [];
-
-let selectedSensorId = null;
-
-let historyChart = null;
-
-let predictionChart = null;
-
-
-const sensorMap =
-    new SensorMap(
-        "sensor-map"
+const logoutButton =
+    document.getElementById(
+        "logout-button"
     );
 
 
-function formatTimestamp(timestamp) {
+let sensors = [];
+
+let selectedSensorId =
+    null;
+
+let historyChart =
+    null;
+
+let predictionChart =
+    null;
+
+let sensorMap =
+    null;
+
+
+function redirectToLogin() {
+    window.location.href =
+        "/login";
+}
+
+
+async function getCurrentUser() {
+
+    const response =
+        await fetch(
+            "/api/auth/me",
+            {
+                method: "GET",
+
+                credentials:
+                    "same-origin",
+            }
+        );
+
+
+    if (
+        response.status ===
+        401
+    ) {
+
+        redirectToLogin();
+
+        return null;
+    }
+
+
+    if (
+        !response.ok
+    ) {
+
+        throw new Error(
+            `Erro ao verificar autenticação: ${response.status}`
+        );
+    }
+
+
+    return response.json();
+}
+
+
+async function logout() {
+
+    logoutButton.disabled =
+        true;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/auth/logout",
+                {
+                    method: "POST",
+
+                    credentials:
+                        "same-origin",
+                }
+            );
+
+
+        if (
+            !response.ok &&
+            response.status !==
+            401
+        ) {
+
+            throw new Error(
+                `Erro ao encerrar sessão: ${response.status}`
+            );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Erro durante o logout:",
+            error
+        );
+
+    } finally {
+
+        redirectToLogin();
+    }
+}
+
+
+function formatTimestamp(
+    timestamp
+) {
+
     const date =
         new Date(timestamp);
+
 
     return date.toLocaleString(
         "pt-BR"
@@ -39,74 +143,145 @@ function formatTimestamp(timestamp) {
 }
 
 
-function formatChartTime(timestamp) {
+function formatChartTime(
+    timestamp
+) {
+
     const date =
         new Date(timestamp);
+
 
     return date.toLocaleTimeString(
         "pt-BR",
         {
-            hour: "2-digit",
-            minute: "2-digit",
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit",
         }
     );
 }
 
 
-async function fetchHistory(sensorId) {
+async function fetchHistory(
+    sensorId
+) {
+
     const response =
         await fetch(
-            `/api/sensors/${sensorId}/history`
+            `/api/sensors/${sensorId}/history`,
+            {
+                credentials:
+                    "same-origin",
+            }
         );
 
-    if (!response.ok) {
+
+    if (
+        response.status ===
+        401
+    ) {
+
+        redirectToLogin();
+
+        throw new Error(
+            "Sessão expirada."
+        );
+    }
+
+
+    if (
+        !response.ok
+    ) {
+
         throw new Error(
             `Erro ao carregar histórico: ${response.status}`
         );
     }
 
+
     return response.json();
 }
 
 
-async function fetchPredictions(sensorId) {
+async function fetchPredictions(
+    sensorId
+) {
+
     const response =
         await fetch(
-            `/api/sensors/${sensorId}/predictions`
+            `/api/sensors/${sensorId}/predictions`,
+            {
+                credentials:
+                    "same-origin",
+            }
         );
 
-    if (!response.ok) {
+
+    if (
+        response.status ===
+        401
+    ) {
+
+        redirectToLogin();
+
+        throw new Error(
+            "Sessão expirada."
+        );
+    }
+
+
+    if (
+        !response.ok
+    ) {
+
         throw new Error(
             `Erro ao carregar previsões: ${response.status}`
         );
     }
+
 
     return response.json();
 }
 
 
 function destroyCharts() {
-    if (historyChart) {
+
+    if (
+        historyChart
+    ) {
+
         historyChart.destroy();
 
-        historyChart = null;
+        historyChart =
+            null;
     }
 
-    if (predictionChart) {
+
+    if (
+        predictionChart
+    ) {
+
         predictionChart.destroy();
 
-        predictionChart = null;
+        predictionChart =
+            null;
     }
 }
 
 
-function renderSensorDetails(sensor) {
+function renderSensorDetails(
+    sensor
+) {
+
     sensorsContainer.innerHTML = `
         <article class="sensor-details-card">
 
             <div class="sensor-header">
 
                 <div>
+
                     <h2
                         id="selected-sensor-name"
                         class="sensor-name"
@@ -120,6 +295,7 @@ function renderSensorDetails(sensor) {
                     >
                         Região: ${sensor.region}
                     </p>
+
                 </div>
 
                 <div
@@ -142,13 +318,17 @@ function renderSensorDetails(sensor) {
 
 
             <div class="sensor-footer">
+
                 Última coleta:
 
-                <span id="selected-sensor-timestamp">
+                <span
+                    id="selected-sensor-timestamp"
+                >
                     ${formatTimestamp(
         sensor.read_timestamp
     )}
                 </span>
+
             </div>
 
         </article>
@@ -190,7 +370,10 @@ function renderSensorDetails(sensor) {
 }
 
 
-function updateSelectedSensorSummary(sensor) {
+function updateSelectedSensorSummary(
+    sensor
+) {
+
     const nameElement =
         document.getElementById(
             "selected-sensor-name"
@@ -224,6 +407,7 @@ function updateSelectedSensorSummary(sensor) {
         !statusElement ||
         !timestampElement
     ) {
+
         return;
     }
 
@@ -247,13 +431,18 @@ function updateSelectedSensorSummary(sensor) {
 }
 
 
-function createHistoryChart(history) {
+function createHistoryChart(
+    history
+) {
+
     const canvas =
         document.getElementById(
             "history-chart"
         );
 
+
     if (!canvas) {
+
         return;
     }
 
@@ -278,39 +467,53 @@ function createHistoryChart(history) {
         new Chart(
             canvas,
             {
-                type: "line",
+                type:
+                    "line",
 
                 data: {
+
                     labels,
 
                     datasets: [
+
                         {
                             label:
                                 "Ruído médio",
 
-                            data: values,
+                            data:
+                                values,
 
-                            tension: 0.3,
+                            tension:
+                                0.3,
 
-                            borderWidth: 2,
+                            borderWidth:
+                                2,
 
-                            pointRadius: 3,
+                            pointRadius:
+                                3,
                         },
                     ],
                 },
 
                 options: {
-                    responsive: true,
+
+                    responsive:
+                        true,
 
                     maintainAspectRatio:
                         false,
 
                     scales: {
-                        y: {
-                            title: {
-                                display: true,
 
-                                text: "dB",
+                        y: {
+
+                            title: {
+
+                                display:
+                                    true,
+
+                                text:
+                                    "dB",
                             },
                         },
                     },
@@ -323,12 +526,15 @@ function createHistoryChart(history) {
 function createPredictionChart(
     predictions
 ) {
+
     const canvas =
         document.getElementById(
             "prediction-chart"
         );
 
+
     if (!canvas) {
+
         return;
     }
 
@@ -353,39 +559,53 @@ function createPredictionChart(
         new Chart(
             canvas,
             {
-                type: "line",
+                type:
+                    "line",
 
                 data: {
+
                     labels,
 
                     datasets: [
+
                         {
                             label:
                                 "Previsão",
 
-                            data: values,
+                            data:
+                                values,
 
-                            tension: 0.3,
+                            tension:
+                                0.3,
 
-                            borderWidth: 2,
+                            borderWidth:
+                                2,
 
-                            pointRadius: 3,
+                            pointRadius:
+                                3,
                         },
                     ],
                 },
 
                 options: {
-                    responsive: true,
+
+                    responsive:
+                        true,
 
                     maintainAspectRatio:
                         false,
 
                     scales: {
-                        y: {
-                            title: {
-                                display: true,
 
-                                text: "dB",
+                        y: {
+
+                            title: {
+
+                                display:
+                                    true,
+
+                                text:
+                                    "dB",
                             },
                         },
                     },
@@ -398,6 +618,7 @@ function createPredictionChart(
 async function loadSensorDetails(
     sensorId
 ) {
+
     const sensor =
         sensors.find(
             (item) =>
@@ -405,7 +626,9 @@ async function loadSensorDetails(
                 sensorId
         );
 
+
     if (!sensor) {
+
         return;
     }
 
@@ -425,15 +648,17 @@ async function loadSensorDetails(
     const [
         history,
         predictions,
-    ] = await Promise.all([
-        fetchHistory(
-            sensorId
-        ),
+    ] = await Promise.all(
+        [
+            fetchHistory(
+                sensorId
+            ),
 
-        fetchPredictions(
-            sensorId
-        ),
-    ]);
+            fetchPredictions(
+                sensorId
+            ),
+        ]
+    );
 
 
     /*
@@ -441,22 +666,30 @@ async function loadSensorDetails(
      * de outro sensor sobrescreva
      * a seleção atual.
      */
+
     if (
         selectedSensorId !==
         sensorId
     ) {
+
         return;
     }
 
 
-    if (history.length > 0) {
+    if (
+        history.length > 0
+    ) {
+
         createHistoryChart(
             history
         );
     }
 
 
-    if (predictions.length > 0) {
+    if (
+        predictions.length > 0
+    ) {
+
         createPredictionChart(
             predictions
         );
@@ -465,14 +698,34 @@ async function loadSensorDetails(
 
 
 async function loadSensors() {
+
     try {
+
         const response =
             await fetch(
-                "/api/sensors"
+                "/api/sensors",
+                {
+                    credentials:
+                        "same-origin",
+                }
             );
 
 
-        if (!response.ok) {
+        if (
+            response.status ===
+            401
+        ) {
+
+            redirectToLogin();
+
+            return false;
+        }
+
+
+        if (
+            !response.ok
+        ) {
+
             throw new Error(
                 `Erro HTTP: ${response.status}`
             );
@@ -487,6 +740,7 @@ async function loadSensors() {
          * Atualiza os sensores
          * exibidos no mapa.
          */
+
         sensorMap.renderSensors(
             sensors
         );
@@ -500,9 +754,12 @@ async function loadSensors() {
          * para preservar as instâncias
          * do Chart.js.
          */
+
         if (
-            selectedSensorId !== null
+            selectedSensorId !==
+            null
         ) {
+
             const selectedSensor =
                 sensors.find(
                     (sensor) =>
@@ -511,7 +768,10 @@ async function loadSensors() {
                 );
 
 
-            if (selectedSensor) {
+            if (
+                selectedSensor
+            ) {
+
                 updateSelectedSensorSummary(
                     selectedSensor
                 );
@@ -524,6 +784,9 @@ async function loadSensors() {
 
         connectionText.textContent =
             "Conectado";
+
+
+        return true;
 
     } catch (error) {
 
@@ -538,38 +801,24 @@ async function loadSensors() {
 
         connectionText.textContent =
             "Erro de conexão";
+
+
+        return false;
     }
 }
 
 
-sensorMap.container.addEventListener(
-    "sensor-selected",
-    (event) => {
-
-        const sensorId =
-            event.detail.sensorId;
-
-
-        loadSensorDetails(
-            sensorId
-        ).catch(
-            (error) => {
-
-                console.error(
-                    "Erro ao carregar detalhes do sensor:",
-                    error
-                );
-
-            }
-        );
-
-    }
-);
-
-
 async function updateSensors() {
 
-    await loadSensors();
+    const loaded =
+        await loadSensors();
+
+
+    if (!loaded) {
+
+        return;
+    }
+
 
     setTimeout(
         updateSensors,
@@ -580,12 +829,88 @@ async function updateSensors() {
 
 async function initializeDashboard() {
 
-    await loadSensors();
+    try {
 
-    setTimeout(
-        updateSensors,
-        10000
-    );
+        const user =
+            await getCurrentUser();
+
+
+        if (!user) {
+
+            return;
+        }
+
+
+        currentUserName.textContent =
+            user.name;
+
+
+        sensorMap =
+            new SensorMap(
+                "sensor-map"
+            );
+
+
+        sensorMap.container.addEventListener(
+            "sensor-selected",
+            (event) => {
+
+                const sensorId =
+                    event.detail.sensorId;
+
+
+                loadSensorDetails(
+                    sensorId
+                ).catch(
+                    (error) => {
+
+                        console.error(
+                            "Erro ao carregar detalhes do sensor:",
+                            error
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        logoutButton.addEventListener(
+            "click",
+            logout
+        );
+
+
+        const loaded =
+            await loadSensors();
+
+
+        if (!loaded) {
+
+            return;
+        }
+
+
+        setTimeout(
+            updateSensors,
+            10000
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Erro ao inicializar o dashboard:",
+            error
+        );
+
+
+        connectionIndicator.style.background =
+            "#f04438";
+
+        connectionText.textContent =
+            "Erro de autenticação";
+    }
 }
 
 

@@ -19,6 +19,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 24px;
     margin-bottom: 32px;
 }
 
@@ -30,6 +31,48 @@ body {
 .dashboard-header p {
     margin: 6px 0 0;
     color: #667085;
+}
+
+.dashboard-user-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.user-label {
+    color: #98a2b3;
+    font-size: 12px;
+}
+
+.user-info strong {
+    font-size: 14px;
+}
+
+.logout-button {
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: #ffffff;
+    color: #344054;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.logout-button:hover {
+    background: #f9fafb;
+}
+
+.logout-button:disabled {
+    cursor: wait;
+    opacity: 0.65;
 }
 
 .connection-status {
@@ -154,4 +197,22 @@ body {
 
 .chart-section canvas {
     width: 100%;
+}
+
+@media (max-width: 760px) {
+
+    .dashboard-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .dashboard-user-area {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .user-info {
+        align-items: flex-start;
+    }
 }
