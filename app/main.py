@@ -9,7 +9,7 @@ from app.model.service import ModelService
 from app.simulator.service import SimulatorService
 
 
-COLLECTION_INTERVAL_SECONDS = 10
+COLLECTION_INTERVAL_SECONDS = 1
 
 
 def run_simulator() -> None:

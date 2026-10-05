@@ -28,7 +28,7 @@ LOCAL_ZONE = ZoneInfo(
     "America/Sao_Paulo"
 )
 
-FORECAST_HORIZON = 24
+FORECAST_HORIZON = 25
 HISTORY_HOURS = 24
 
 
@@ -157,6 +157,7 @@ class ModelService:
             insert_predictions(
                 connection=connection,
                 run_id=run_id,
+                model_version=self.model_version,
                 predictions=all_predictions,
             )
 

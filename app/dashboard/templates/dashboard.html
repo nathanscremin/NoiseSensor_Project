@@ -3,104 +3,56 @@
 
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>NoiseSensor Dashboard</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
     <link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
 </head>
 
 <body>
-
     <main class="dashboard">
-
         <header class="dashboard-header">
-
             <div>
-
-                <h1>
-                    NoiseSensor
-                </h1>
-
-                <p>
-                    Monitoramento de ruído
-                </p>
-
+                <h1>NoiseSensor</h1>
+                <p>Monitoramento de ruído</p>
             </div>
 
-
             <div class="dashboard-user-area">
-
                 <div class="user-info">
-
-                    <span class="user-label">
-                        Usuário
-                    </span>
-
-                    <strong id="current-user-name">
-                        Carregando...
-                    </strong>
-
+                    <span class="user-label">Usuário</span>
+                    <strong id="current-user-name">Carregando...</strong>
                 </div>
-
 
                 <button id="logout-button" class="logout-button" type="button">
                     Sair
                 </button>
 
-
                 <div class="connection-status">
-
                     <span id="connection-indicator"></span>
-
-                    <span id="connection-text">
-                        Conectando...
-                    </span>
-
+                    <span id="connection-text">Conectando...</span>
                 </div>
-
             </div>
-
         </header>
 
-
         <section class="map-section">
-
-            <h2>
-                Mapa de sensores
-            </h2>
-
+            <h2>Mapa de sensores</h2>
             <div id="sensor-map"></div>
-
         </section>
-
 
         <section id="sensor-details" class="sensor-details">
-
             <p class="loading">
-                Clique em um sensor no mapa
-                para visualizar os dados.
+                Clique em um sensor no mapa para visualizar os dados.
             </p>
-
         </section>
-
     </main>
 
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-
-    <script src="{{ url_for('static', path='js/map.js') }}"></script>
-
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
+    <script src="{{ url_for('static', path='js/map.js') }}"></script>
+    <script src="{{ url_for('static', path='js/alerts.js') }}"></script>
     <script src="{{ url_for('static', path='js/dashboard.js') }}"></script>
-
 </body>
 
 </html>

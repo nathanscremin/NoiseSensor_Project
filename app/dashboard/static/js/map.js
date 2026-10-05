@@ -1,9 +1,6 @@
 class SensorMap {
     constructor(containerId) {
-        this.container =
-            document.getElementById(
-                containerId
-            );
+        this.container = document.getElementById(containerId);
 
         if (!this.container) {
             throw new Error(
@@ -11,134 +8,117 @@ class SensorMap {
             );
         }
 
-        this.map =
-            L.map(
-                this.container
-            ).setView(
-                [0, 0],
-                2
-            );
-
-        this.markers =
-            new Map();
-
+        this.map = L.map(this.container).setView([0, 0], 2);
+        this.markers = new Map();
         this.geoJsonLayer = null;
 
         L.tileLayer(
             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             {
-                attribution:
-                    "&copy; OpenStreetMap contributors"
+                attribution: "&copy; OpenStreetMap contributors",
             }
-        ).addTo(
-            this.map
-        );
+        ).addTo(this.map);
 
         this.loadGeoJson();
     }
 
     async loadGeoJson() {
         try {
-            const response =
-                await fetch(
-                    "/static/map/santo_andre_dashboard.geojson"
-                );
+            const response = await fetch(
+                "/static/map/santo_andre_dashboard.geojson"
+            );
 
             if (!response.ok) {
-                throw new Error(
-                    `Erro HTTP: ${response.status}`
-                );
+                throw new Error(`Erro HTTP: ${response.status}`);
             }
 
-            const geoJson =
-                await response.json();
+            const geoJson = await response.json();
 
-            this.geoJsonLayer =
-                L.geoJSON(
-                    geoJson,
-                    {
-                        style: {
-                            weight: 1,
-                            fillOpacity: 0.15
-                        }
-                    }
-                );
+            this.geoJsonLayer = L.geoJSON(geoJson, {
+                style: {
+                    weight: 1,
+                    fillOpacity: 0.15,
+                },
+            });
 
-            this.geoJsonLayer.addTo(
-                this.map
-            );
+            this.geoJsonLayer.addTo(this.map);
 
-            const bounds =
-                this.geoJsonLayer.getBounds();
+            const bounds = this.geoJsonLayer.getBounds();
 
             if (bounds.isValid()) {
-                this.map.fitBounds(
-                    bounds
-                );
+                this.map.fitBounds(bounds, {
+                    padding: [20, 20],
+                });
             }
-
         } catch (error) {
-            console.error(
-                "Erro ao carregar mapa:",
-                error
-            );
+            console.error("Erro ao carregar mapa:", error);
         }
     }
 
     renderSensors(sensors) {
-        for (
-            const marker
-            of this.markers.values()
-        ) {
-            this.map.removeLayer(
-                marker
-            );
+        const sensorIds = new Set(
+            sensors.map((sensor) => sensor.sensor_id)
+        );
+
+        for (const [sensorId, marker] of this.markers.entries()) {
+            if (!sensorIds.has(sensorId)) {
+                this.map.removeLayer(marker);
+                this.markers.delete(sensorId);
+            }
         }
 
-        this.markers.clear();
+        const alertStateLabels = {
+            normal: "Normal",
+            pending_alert: "Aguardando ativação",
+            alert: "Em alerta",
+            pending_recovery: "Aguardando recuperação",
+        };
 
         for (const sensor of sensors) {
-            const marker =
-                L.marker(
-                    [
-                        sensor.latitude,
-                        sensor.longitude
-                    ]
-                );
+            const alertState =
+                alertStateLabels[sensor.alert_state] || "Desconhecido";
 
-            marker.bindPopup(`
-                <strong>${sensor.name}</strong><br>
-                ${sensor.noise_db.toFixed(2)} dB
-            `);
+            const noiseText =
+                sensor.noise_db === null || sensor.noise_db === undefined
+                    ? "Aguardando primeira leitura"
+                    : `${Number(sensor.noise_db).toFixed(2)} dB`;
 
-            marker.on(
-                "click",
-                () => {
-                    const event =
-                        new CustomEvent(
-                            "sensor-selected",
-                            {
-                                detail: {
-                                    sensorId:
-                                        sensor.sensor_id
-                                }
-                            }
-                        );
+            const popup = `
+                <div style="max-width: 220px; overflow-wrap: anywhere;">
+                    <strong>${sensor.name}</strong><br>
+                    ${noiseText}<br>
+                    Estado do alerta: ${alertState}
+                </div>
+            `;
 
-                    this.container.dispatchEvent(
-                        event
-                    );
-                }
-            );
+            let marker = this.markers.get(sensor.sensor_id);
 
-            marker.addTo(
-                this.map
-            );
+            if (!marker) {
+                marker = L.marker([
+                    sensor.latitude,
+                    sensor.longitude,
+                ]);
 
-            this.markers.set(
-                sensor.sensor_id,
-                marker
-            );
+                marker.on("click", () => {
+                    const event = new CustomEvent("sensor-selected", {
+                        detail: {
+                            sensorId: sensor.sensor_id,
+                        },
+                    });
+
+                    this.container.dispatchEvent(event);
+                });
+
+                marker.addTo(this.map);
+                this.markers.set(sensor.sensor_id, marker);
+            } else {
+                marker.setLatLng([
+                    sensor.latitude,
+                    sensor.longitude,
+                ]);
+            }
+
+            marker.bindPopup(popup);
         }
     }
 }

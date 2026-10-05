@@ -7,6 +7,26 @@ import psycopg
 from app.simulator.sensor import Sensor
 
 
+def sensor_belongs_to_user(
+    connection: psycopg.Connection,
+    sensor_id: int,
+    user_id: int,
+) -> bool:
+    """Verifica se um sensor pertence ao usuário informado."""
+
+    row = connection.execute(
+        """
+        SELECT 1
+        FROM sensors
+        WHERE sensor_id = %s
+          AND user_id = %s;
+        """,
+        (sensor_id, user_id),
+    ).fetchone()
+
+    return row is not None
+
+
 def get_active_sensors(
     connection: psycopg.Connection,
 ) -> list[Sensor]:
@@ -177,15 +197,18 @@ def create_prediction_run(
 def insert_predictions(
     connection: psycopg.Connection,
     run_id: int,
+    model_version: str,
     predictions,
 ) -> None:
     """
-    Salva todas as previsões de uma execução do modelo.
+    Salva o histórico e substitui atomicamente as previsões atuais.
 
-    As previsões são vinculadas ao run_id recebido.
+    O histórico permanece em ``predictions``. A tabela
+    ``current_predictions`` representa somente a execução mais recente,
+    evitando que rodadas antigas continuem sendo exibidas no dashboard.
     """
 
-    query = """
+    history_query = """
         INSERT INTO predictions (
             run_id,
             sensor_id,
@@ -198,6 +221,27 @@ def insert_predictions(
             %s,
             %s,
             %s,
+            %s
+        );
+    """
+
+    current_query = """
+        INSERT INTO current_predictions (
+            run_id,
+            sensor_id,
+            target_timestamp,
+            horizon_hours,
+            predicted_noise_db,
+            run_timestamp,
+            model_version
+        )
+        VALUES (
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            NOW(),
             %s
         );
     """
@@ -218,18 +262,25 @@ def insert_predictions(
             "Nenhuma previsão foi fornecida para salvar."
         )
 
+    # A exclusão e a nova inserção acontecem antes do commit.
+    # Requisições do dashboard continuam vendo o conjunto anterior
+    # até que o novo conjunto esteja completamente pronto.
     with connection.cursor() as cursor:
-        cursor.executemany(
-            query,
-            rows,
-        )
+        cursor.execute("DELETE FROM current_predictions;")
+        cursor.executemany(history_query, rows)
+        current_rows = [
+            row + (model_version,)
+            for row in rows
+        ]
+        cursor.executemany(current_query, current_rows)
 
     connection.commit()
 
 def get_latest_sensor_readings(
     connection: psycopg.Connection,
+    user_id: int,
 ) -> list[tuple]:
-    """Retorna a leitura mais recente de cada sensor."""
+    """Retorna os sensores ativos do usuário e suas últimas leituras."""
 
     query = """
         SELECT
@@ -240,19 +291,29 @@ def get_latest_sensor_readings(
             s.region,
             s.status,
             sr.noise_db,
-            sr.read_timestamp
+            sr.read_timestamp,
+            COALESCE(sas.state, 'normal') AS alert_state
         FROM sensors AS s
-        INNER JOIN sensors_readings AS sr
-            ON sr.sensor_id = s.sensor_id
-        WHERE sr.read_timestamp = (
-            SELECT MAX(sr2.read_timestamp)
+        LEFT JOIN LATERAL (
+            SELECT
+                sr2.noise_db,
+                sr2.read_timestamp
             FROM sensors_readings AS sr2
             WHERE sr2.sensor_id = s.sensor_id
-        )
+            ORDER BY sr2.read_timestamp DESC
+            LIMIT 1
+        ) AS sr ON TRUE
+        LEFT JOIN sensor_alert_states AS sas
+            ON sas.sensor_id = s.sensor_id
+        WHERE s.status = 'active'
+          AND s.user_id = %s
         ORDER BY s.sensor_id;
     """
 
-    return connection.execute(query).fetchall()
+    return connection.execute(
+        query,
+        (user_id,),
+    ).fetchall()
 
 def get_sensor_history(
     connection: psycopg.Connection,
@@ -289,7 +350,7 @@ def get_sensor_predictions(
     connection: psycopg.Connection,
     sensor_id: int,
 ) -> list[tuple]:
-    """Retorna as previsões atuais de um sensor."""
+    """Retorna somente as próximas 24 horas futuras do sensor."""
 
     query = """
         SELECT
@@ -298,7 +359,14 @@ def get_sensor_predictions(
             predicted_noise_db
         FROM current_predictions
         WHERE sensor_id = %s
-        ORDER BY target_timestamp;
+          AND target_timestamp > (
+              DATE_TRUNC(
+                  'hour',
+                  NOW() AT TIME ZONE 'America/Sao_Paulo'
+              ) AT TIME ZONE 'America/Sao_Paulo'
+          )
+        ORDER BY target_timestamp
+        LIMIT 24;
     """
 
     return connection.execute(

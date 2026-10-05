@@ -123,6 +123,8 @@ def forecast_sensor(
         .max()
     )
 
+    # Gera também a hora corrente. O dashboard a remove da visualização
+    # para manter exatamente 24 horas realmente futuras.
     target_timestamp = (
         last_hour
         .replace(

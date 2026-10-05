@@ -1,20 +1,29 @@
 """Responsável pela geração das leituras simuladas."""
 
-import random
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+from app.model.historical_generator import calculate_noise
 from app.simulator.reading import SensorReading
 from app.simulator.sensor import Sensor
 
-def generate_reading(sensor: Sensor) -> SensorReading:
-    """
-    Gera uma leitura simples para o sensor informado.
-    O sensor recebido determina o sensor_id da leitura.
-    """
 
-    noise_db = round(random.uniform(40.0, 80.0), 2)
+LOCAL_ZONE = ZoneInfo("America/Sao_Paulo")
+
+
+def generate_reading(sensor: Sensor) -> SensorReading:
+    """Gera uma leitura usando o mesmo padrão sintético do histórico."""
+
+    timestamp = datetime.now(timezone.utc)
+    local_timestamp = timestamp.astimezone(LOCAL_ZONE)
+
+    noise_db = calculate_noise(
+        sensor_name=sensor.name,
+        timestamp=local_timestamp,
+    )
 
     return SensorReading(
         sensor_id=sensor.sensor_id,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=timestamp,
         noise_db=noise_db,
     )

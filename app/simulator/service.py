@@ -6,6 +6,8 @@ from app.database.repository import (
     get_active_sensors,
     insert_reading,
 )
+from app.alerts.models import AlertEventType
+from app.alerts.service import AlertService
 from app.simulator.generator import generate_reading
 from app.simulator.sensor import Sensor
 
@@ -13,13 +15,13 @@ class SimulatorService:
     """
     Controla a execução do simulador.
     Nesta primeira versão, todos os sensores ativos
-    realizam uma coleta a cada 10 segundos.
+    realizam uma coleta a cada segundo.
     """
 
     def __init__(
         self,
         connection: psycopg.Connection,
-        collection_interval: int = 10,
+        collection_interval: float = 1.0,
     ) -> None:
         """
         Inicializa o serviço.
@@ -31,6 +33,7 @@ class SimulatorService:
         self.connection = connection
         self.collection_interval = collection_interval
         self.sensors: list[Sensor] = []
+        self.alert_service = AlertService()
 
     def load_sensors(self) -> None:
         """
@@ -72,10 +75,28 @@ class SimulatorService:
                 noise_db=reading.noise_db,
             )
 
+            alert_event = self.alert_service.process_reading(
+                self.connection,
+                reading,
+            )
+
             print(
                 f"Sensor {reading.sensor_id} → "
                 f"{reading.noise_db:.2f} dB"
             )
+
+            if alert_event is not None:
+                if alert_event.event_type == AlertEventType.STARTED:
+                    print(
+                        f"[ALERTA] Sensor {reading.sensor_id} entrou em alerta. "
+                        f"Limite: {alert_event.alert.threshold_db:.2f} dB | "
+                        f"Pico: {alert_event.alert.peak_noise_db:.2f} dB"
+                    )
+                elif alert_event.event_type == AlertEventType.ENDED:
+                    print(
+                        f"[ALERTA] Sensor {reading.sensor_id} saiu do alerta. "
+                        f"Pico: {alert_event.alert.peak_noise_db:.2f} dB"
+                    )
 
     def run(self) -> None:
         """
@@ -86,12 +107,19 @@ class SimulatorService:
 
         print(
             f"\nSimulador iniciado. "
-            f"Intervalo: {self.collection_interval}s\n"
+            f"Intervalo: {self.collection_interval:g}s\n"
         )
 
         while True:
+            cycle_started = time.monotonic()
+
             self.collect()
 
-            time.sleep(
-                self.collection_interval
+            next_cycle = (
+                cycle_started
+                + self.collection_interval
             )
+            sleep_time = next_cycle - time.monotonic()
+
+            if sleep_time > 0:
+                time.sleep(sleep_time)

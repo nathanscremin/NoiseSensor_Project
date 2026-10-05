@@ -2,6 +2,7 @@
 
 import random
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import psycopg
 
@@ -16,6 +17,8 @@ SAMPLES_PER_HOUR = 6
 MINUTES_BETWEEN_SAMPLES = 10
 
 RANDOM_SEED = 42
+
+LOCAL_ZONE = ZoneInfo("America/Sao_Paulo")
 
 INSERT_BATCH_SIZE = 5000
 
@@ -197,7 +200,8 @@ def insert_historical_data(
             read_timestamp,
             noise_db
         )
-        VALUES (%s, %s, %s);
+        VALUES (%s, %s, %s)
+        ON CONFLICT (sensor_id, read_timestamp) DO NOTHING;
     """
 
     total_inserted = 0
@@ -217,7 +221,7 @@ def insert_historical_data(
                     batch,
                 )
 
-                total_inserted += len(batch)
+                total_inserted += cursor.rowcount
 
                 batch.clear()
 
@@ -233,7 +237,7 @@ def insert_historical_data(
                 batch,
             )
 
-            total_inserted += len(batch)
+            total_inserted += cursor.rowcount
 
     connection.commit()
 
@@ -250,7 +254,7 @@ def main() -> None:
     )
 
     end = datetime.now(
-        timezone.utc
+        LOCAL_ZONE
     )
 
     start = (

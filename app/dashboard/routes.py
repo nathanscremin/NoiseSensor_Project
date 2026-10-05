@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
@@ -12,6 +12,7 @@ from app.database.repository import (
     get_latest_sensor_readings,
     get_sensor_history,
     get_sensor_predictions,
+    sensor_belongs_to_user,
 )
 
 
@@ -22,14 +23,17 @@ LOCAL_ZONE = ZoneInfo("America/Sao_Paulo")
 
 @router.get("/api/sensors")
 def get_sensors(
-    _current_user: User = Depends(
+    current_user: User = Depends(
         get_current_user
     ),
 ):
-    """Retorna a leitura mais recente de cada sensor."""
+    """Retorna os sensores ativos vinculados ao usuário."""
 
     with create_connection() as connection:
-        rows = get_latest_sensor_readings(connection)
+        rows = get_latest_sensor_readings(
+            connection,
+            current_user.user_id,
+        )
 
     sensors = []
 
@@ -42,8 +46,17 @@ def get_sensors(
                 "longitude": float(row[3]),
                 "region": row[4],
                 "status": row[5],
-                "noise_db": float(row[6]),
-                "read_timestamp": row[7].isoformat(),
+                "noise_db": (
+                    float(row[6])
+                    if row[6] is not None
+                    else None
+                ),
+                "read_timestamp": (
+                    row[7].isoformat()
+                    if row[7] is not None
+                    else None
+                ),
+                "alert_state": row[8],
             }
         )
 
@@ -55,16 +68,35 @@ def get_sensors(
 )
 def get_history(
     sensor_id: int,
-    _current_user: User = Depends(
+    current_user: User = Depends(
         get_current_user
     ),
 ):
-    """Retorna o histórico das últimas 24 horas."""
+    """Retorna as últimas 24 horas, incluindo a hora corrente."""
 
-    end = datetime.now(timezone.utc)
-    start = end - timedelta(hours=24)
+    now_local = datetime.now(LOCAL_ZONE)
+    current_hour = now_local.replace(
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+
+    start_local = current_hour - timedelta(hours=23)
+
+    start = start_local.astimezone(timezone.utc)
+    end = now_local.astimezone(timezone.utc)
 
     with create_connection() as connection:
+        if not sensor_belongs_to_user(
+            connection,
+            sensor_id,
+            current_user.user_id,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Sensor não encontrado.",
+            )
+
         rows = get_sensor_history(
             connection,
             sensor_id,
@@ -95,13 +127,23 @@ def get_history(
 )
 def get_predictions(
     sensor_id: int,
-    _current_user: User = Depends(
+    current_user: User = Depends(
         get_current_user
     ),
 ):
-    """Retorna as previsões atuais de um sensor."""
+    """Retorna as próximas 24 horas futuras do sensor."""
 
     with create_connection() as connection:
+        if not sensor_belongs_to_user(
+            connection,
+            sensor_id,
+            current_user.user_id,
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Sensor não encontrado.",
+            )
+
         rows = get_sensor_predictions(
             connection,
             sensor_id,

@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 from app.auth.dependencies import get_optional_current_user
 from app.auth.models import User
 from app.auth.routes import router as auth_router
+from app.alerts.routes import router as alerts_router
 from app.dashboard.routes import router
 
 
@@ -45,6 +46,7 @@ class DashboardService:
 
         self.app.include_router(router)
         self.app.include_router(auth_router)
+        self.app.include_router(alerts_router)
 
         self._configure_pages()
 
