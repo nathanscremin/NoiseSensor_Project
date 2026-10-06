@@ -282,3 +282,107 @@ def revoke_session(
     )
 
     connection.commit()
+
+
+def create_telegram_link_token(
+    connection: psycopg.Connection,
+    user_id: int,
+    token_hash: str,
+    expires_at: datetime,
+) -> None:
+    """Cria um token temporário para vincular o Telegram do usuário."""
+
+    connection.execute(
+        """
+        UPDATE telegram_link_tokens
+        SET used_at = NOW()
+        WHERE user_id = %s
+          AND used_at IS NULL;
+        """,
+        (user_id,),
+    )
+
+    connection.execute(
+        """
+        INSERT INTO telegram_link_tokens (
+            user_id,
+            token_hash,
+            expires_at
+        )
+        VALUES (
+            %s,
+            %s,
+            %s
+        );
+        """,
+        (
+            user_id,
+            token_hash,
+            expires_at,
+        ),
+    )
+
+    connection.commit()
+
+
+def complete_telegram_link(
+    connection: psycopg.Connection,
+    token_hash: str,
+    chat_id: int,
+) -> tuple[str, int | None]:
+    """
+    Consome um token válido e vincula o chat do Telegram ao usuário.
+
+    Retorna:
+        ("linked", user_id) quando deu certo;
+        ("already_linked", user_id) quando o chat já pertence a outra conta;
+        ("invalid", None) para token inválido, expirado ou já usado.
+    """
+
+    with connection.transaction():
+        row = connection.execute(
+            """
+            UPDATE telegram_link_tokens
+            SET used_at = NOW()
+            WHERE token_hash = %s
+              AND used_at IS NULL
+              AND expires_at > NOW()
+            RETURNING user_id;
+            """,
+            (token_hash,),
+        ).fetchone()
+
+        if row is None:
+            return "invalid", None
+
+        user_id = row[0]
+
+        owner_row = connection.execute(
+            """
+            SELECT user_id
+            FROM users
+            WHERE telegram_chat_id = %s
+              AND user_id <> %s;
+            """,
+            (
+                chat_id,
+                user_id,
+            ),
+        ).fetchone()
+
+        if owner_row is not None:
+            return "already_linked", user_id
+
+        connection.execute(
+            """
+            UPDATE users
+            SET telegram_chat_id = %s
+            WHERE user_id = %s;
+            """,
+            (
+                chat_id,
+                user_id,
+            ),
+        )
+
+        return "linked", user_id

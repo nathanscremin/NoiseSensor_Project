@@ -1,6 +1,7 @@
 """Serviço responsável pelo servidor web do dashboard."""
 
 from pathlib import Path
+import os
 
 import uvicorn
 from fastapi import Depends, FastAPI, Request
@@ -68,9 +69,18 @@ class DashboardService:
                     status_code=303,
                 )
 
+            telegram_bot_username = (
+                os.getenv("TELEGRAM_BOT_USERNAME", "")
+                .lstrip("@")
+                .strip()
+            )
+
             return self.templates.TemplateResponse(
                 request=request,
                 name="dashboard.html",
+                context={
+                    "telegram_bot_username": telegram_bot_username,
+                },
             )
 
         @self.app.get("/login")

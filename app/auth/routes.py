@@ -9,6 +9,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import RedirectResponse
+from datetime import datetime, timedelta, timezone
 
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
@@ -18,9 +19,18 @@ from app.auth.schemas import (
     RegisterRequest,
     UserResponse,
 )
-from app.auth.security import SESSION_COOKIE_NAME
+from app.auth.repository import create_telegram_link_token
+from app.auth.security import (
+    SESSION_COOKIE_NAME,
+    generate_token,
+    hash_token,
+)
 from app.auth.service import AuthService
 from app.database.connection import create_connection
+from app.notifications.telegram import (
+    get_connection_url,
+    is_configured as telegram_is_configured,
+)
 
 
 router = APIRouter(
@@ -92,6 +102,47 @@ def verify_email(
 
     return RedirectResponse(
         url="/login?verified=1",
+        status_code=status.HTTP_303_SEE_OTHER,
+    )
+
+
+@router.post("/telegram/link")
+def create_telegram_link(
+    current_user: User = Depends(get_current_user),
+):
+    """Gera um link temporário para vincular o Telegram à conta atual."""
+
+    if not telegram_is_configured():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "O Telegram não está configurado no servidor. "
+                "Configure TELEGRAM_BOT_TOKEN e TELEGRAM_BOT_USERNAME."
+            ),
+        )
+
+    raw_token = generate_token()
+    token_hash = hash_token(raw_token)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    with create_connection() as connection:
+        create_telegram_link_token(
+            connection=connection,
+            user_id=current_user.user_id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+
+    try:
+        telegram_url = get_connection_url(raw_token)
+    except RuntimeError as error:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(error),
+        ) from error
+
+    return RedirectResponse(
+        url=telegram_url,
         status_code=status.HTTP_303_SEE_OTHER,
     )
 

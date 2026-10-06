@@ -657,3 +657,91 @@ canvas {
         height: 220px;
     }
 }
+
+.notification-section {
+    margin-top: 8px;
+}
+
+.notification-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.notification-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    min-width: 0;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eaecf0;
+}
+
+.notification-row > * {
+    min-width: 0;
+}
+
+.notification-row strong {
+    flex: 0 0 auto;
+}
+
+.notification-label {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #344054;
+}
+
+.notification-telegram {
+    min-width: 0;
+}
+
+.notification-telegram label {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #344054;
+}
+
+.notification-telegram input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #d0d5dd;
+    border-radius: 8px;
+    padding: 10px 11px;
+    background: #f9fafb;
+    color: #344054;
+}
+
+.notification-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    min-width: 0;
+}
+
+.notification-actions form {
+    margin: 0;
+}
+
+@media (max-width: 760px) {
+    .notification-row {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .notification-actions {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .notification-actions .primary-button {
+        width: 100%;
+    }
+}

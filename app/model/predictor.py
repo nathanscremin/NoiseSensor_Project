@@ -123,8 +123,9 @@ def forecast_sensor(
         .max()
     )
 
-    # Gera também a hora corrente. O dashboard a remove da visualização
-    # para manter exatamente 24 horas realmente futuras.
+    # A primeira previsão é sempre a próxima hora completa.
+    # Assim, horizon_hours=1 representa a primeira hora futura
+    # e horizon_hours=24 representa a 24ª hora futura.
     target_timestamp = (
         last_hour
         .replace(

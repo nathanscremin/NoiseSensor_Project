@@ -6,6 +6,7 @@ import time
 from app.database.connection import create_connection
 from app.dashboard.service import DashboardService
 from app.model.service import ModelService
+from app.notifications.telegram import TelegramPollingService
 from app.simulator.service import SimulatorService
 
 
@@ -29,6 +30,13 @@ def run_model() -> None:
 
     model_service = ModelService()
     model_service.run()
+
+
+def run_telegram() -> None:
+    """Executa o recebimento de atualizações do bot Telegram."""
+
+    telegram_service = TelegramPollingService()
+    telegram_service.run()
 
 
 def run_dashboard() -> None:
@@ -61,6 +69,12 @@ def main() -> None:
         daemon=True,
     )
 
+    telegram_thread = threading.Thread(
+        target=run_telegram,
+        name="telegram",
+        daemon=True,
+    )
+
     dashboard_thread = threading.Thread(
         target=run_dashboard,
         name="dashboard",
@@ -70,10 +84,12 @@ def main() -> None:
     simulator_thread.start()
     model_thread.start()
     dashboard_thread.start()
+    telegram_thread.start()
 
     print("Simulador iniciado.")
     print("Modelo iniciado.")
     print("Dashboard iniciado.")
+    print("Integração Telegram iniciada.")
     print("Aplicação em execução.")
     print("Dashboard: http://127.0.0.1:8000")
 

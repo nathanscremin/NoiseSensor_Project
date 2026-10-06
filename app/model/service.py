@@ -28,7 +28,7 @@ LOCAL_ZONE = ZoneInfo(
     "America/Sao_Paulo"
 )
 
-FORECAST_HORIZON = 25
+FORECAST_HORIZON = 24
 HISTORY_HOURS = 24
 
 

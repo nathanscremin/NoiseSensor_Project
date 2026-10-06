@@ -8,6 +8,7 @@ from app.database.repository import (
 )
 from app.alerts.models import AlertEventType
 from app.alerts.service import AlertService
+from app.notifications.service import NotificationService
 from app.simulator.generator import generate_reading
 from app.simulator.sensor import Sensor
 
@@ -34,6 +35,7 @@ class SimulatorService:
         self.collection_interval = collection_interval
         self.sensors: list[Sensor] = []
         self.alert_service = AlertService()
+        self.notification_service = NotificationService()
 
     def load_sensors(self) -> None:
         """
@@ -86,6 +88,11 @@ class SimulatorService:
             )
 
             if alert_event is not None:
+                self.notification_service.notify_alert_event(
+                    connection=self.connection,
+                    event=alert_event,
+                )
+
                 if alert_event.event_type == AlertEventType.STARTED:
                     print(
                         f"[ALERTA] Sensor {reading.sensor_id} entrou em alerta. "

@@ -45,6 +45,70 @@
                 Clique em um sensor no mapa para visualizar os dados.
             </p>
         </section>
+
+        <section id="notifications-section" class="alert-section notification-section">
+            <div class="section-heading">
+                <div>
+                    <h3>Notificações</h3>
+                    <p>Receba os alertas por e-mail e Telegram.</p>
+                </div>
+            </div>
+
+            <div class="notification-settings">
+                <div class="notification-row">
+                    <div>
+                        <span class="notification-label">E-mail</span>
+                        <span id="notification-email" class="field-help">Carregando...</span>
+                    </div>
+                    <strong id="notification-email-status">Carregando...</strong>
+                </div>
+
+                <div class="notification-telegram">
+                    <label for="telegram-bot-username">ID do bot</label>
+                    <input
+                        id="telegram-bot-username"
+                        type="text"
+                        readonly
+                        value="{{ '@' ~ telegram_bot_username if telegram_bot_username else 'Não configurado' }}"
+                    >
+                    <span class="field-help">
+                        1. Clique em &quot;Vincular Telegram&quot;.<br>
+                        2. No Telegram, toque em &quot;Iniciar&quot; no bot.<br>
+                        3. Volte para o dashboard e confira se o status mudou para &quot;Vinculado&quot;.
+                    </span>
+
+                    <div class="notification-actions">
+                        <form
+                            id="telegram-link-form"
+                            action="/api/auth/telegram/link"
+                            method="post"
+                            target="_blank"
+                        >
+                            <button
+                                id="telegram-link-button"
+                                class="primary-button"
+                                type="submit"
+                            >
+                                Vincular Telegram
+                            </button>
+                        </form>
+                        <span
+                            id="notification-telegram-status"
+                            class="form-message"
+                            aria-live="polite"
+                        >
+                            Carregando...
+                        </span>
+                    </div>
+
+                    <span
+                        id="notification-telegram-message"
+                        class="form-message"
+                        aria-live="polite"
+                    ></span>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -52,6 +116,7 @@
 
     <script src="{{ url_for('static', path='js/map.js') }}"></script>
     <script src="{{ url_for('static', path='js/alerts.js') }}"></script>
+    <script src="{{ url_for('static', path='js/notifications.js') }}"></script>
     <script src="{{ url_for('static', path='js/dashboard.js') }}"></script>
 </body>
 
