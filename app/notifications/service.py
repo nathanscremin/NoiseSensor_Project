@@ -27,13 +27,13 @@ class NotificationTarget:
     region: str
 
 
-def _get_notification_target(
+def _get_notification_targets(
     connection: psycopg.Connection,
     sensor_id: int,
-) -> NotificationTarget | None:
-    """Busca o usuário responsável pelo sensor e seus canais disponíveis."""
+) -> list[NotificationTarget]:
+    """Busca todos os usuários vinculados ao sensor."""
 
-    row = connection.execute(
+    rows = connection.execute(
         """
         SELECT
             u.name,
@@ -43,24 +43,27 @@ def _get_notification_target(
             s.name,
             s.region
         FROM sensors AS s
+        INNER JOIN sensor_users AS su
+            ON su.sensor_id = s.sensor_id
         INNER JOIN users AS u
-            ON u.user_id = s.user_id
-        WHERE s.sensor_id = %s;
+            ON u.user_id = su.user_id
+        WHERE s.sensor_id = %s
+        ORDER BY u.user_id;
         """,
         (sensor_id,),
-    ).fetchone()
+    ).fetchall()
 
-    if row is None:
-        return None
-
-    return NotificationTarget(
-        name=row[0],
-        email=row[1],
-        email_verified=row[2],
-        telegram_chat_id=row[3],
-        sensor_name=row[4],
-        region=row[5],
-    )
+    return [
+        NotificationTarget(
+            name=row[0],
+            email=row[1],
+            email_verified=row[2],
+            telegram_chat_id=row[3],
+            sensor_name=row[4],
+            region=row[5],
+        )
+        for row in rows
+    ]
 
 
 def _format_timestamp(timestamp: datetime | None) -> str:
@@ -177,27 +180,28 @@ class NotificationService:
     ) -> None:
         """Prepara e envia a notificação sem bloquear o simulador."""
 
-        target = _get_notification_target(
+        targets = _get_notification_targets(
             connection,
             event.alert.sensor_id,
         )
 
-        if target is None:
+        if not targets:
             print(
-                "[NOTIFICAÇÃO] Sensor sem usuário proprietário: "
+                "[NOTIFICAÇÃO] Sensor sem usuários associados: "
                 f"{event.alert.sensor_id}"
             )
             return
 
-        title, body = _build_notification(
-            event,
-            target,
-        )
+        for target in targets:
+            title, body = _build_notification(
+                event,
+                target,
+            )
 
-        thread = threading.Thread(
-            target=_send_notifications,
-            args=(target, title, body),
-            name="notification",
-            daemon=True,
-        )
-        thread.start()
+            thread = threading.Thread(
+                target=_send_notifications,
+                args=(target, title, body),
+                name="notification",
+                daemon=True,
+            )
+            thread.start()

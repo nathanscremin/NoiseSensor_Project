@@ -2,11 +2,10 @@
 
 from dataclasses import dataclass
 
+
 @dataclass
 class Sensor:
-    """
-    Representa um sensor cadastrado no banco de dados.
-    """
+    """Representa um sensor cadastrado no banco de dados."""
 
     sensor_id: int
     name: str
@@ -14,4 +13,3 @@ class Sensor:
     longitude: float
     region: str
     status: str
-    user_id: int

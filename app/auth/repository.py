@@ -14,7 +14,8 @@ USER_COLUMNS = """
     password_hash,
     email_verified,
     telegram_chat_id,
-    created_at
+    created_at,
+    role
 """
 
 
@@ -29,6 +30,7 @@ def _user_from_row(row: tuple) -> User:
         email_verified=row[4],
         telegram_chat_id=row[5],
         created_at=row[6],
+        role=row[7],
     )
 
 

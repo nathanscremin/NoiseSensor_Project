@@ -1,6 +1,6 @@
 """Dependências utilizadas para autenticar requisições."""
 
-from fastapi import Cookie, HTTPException, status
+from fastapi import Cookie, Depends, HTTPException, status
 
 from app.auth.models import User
 from app.auth.service import AuthService
@@ -17,11 +17,7 @@ def get_current_user(
         alias=SESSION_COOKIE_NAME,
     ),
 ) -> User:
-    """
-    Retorna o usuário autenticado da sessão atual.
-
-    Lança 401 quando não existe sessão válida.
-    """
+    """Retorna o usuário autenticado da sessão atual."""
 
     if session_token is None:
         raise HTTPException(
@@ -44,17 +40,27 @@ def get_current_user(
     return user
 
 
+def get_current_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Retorna o usuário atual somente quando ele é administrador."""
+
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso restrito a administradores.",
+        )
+
+    return current_user
+
+
 def get_optional_current_user(
     session_token: str | None = Cookie(
         default=None,
         alias=SESSION_COOKIE_NAME,
     ),
 ) -> User | None:
-    """
-    Retorna o usuário autenticado quando existe uma sessão válida.
-
-    Retorna None quando o usuário não está autenticado.
-    """
+    """Retorna o usuário autenticado quando existe uma sessão válida."""
 
     if session_token is None:
         return None

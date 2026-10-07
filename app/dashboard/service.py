@@ -9,10 +9,11 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.auth.dependencies import get_optional_current_user
+from app.auth.dependencies import get_current_admin, get_optional_current_user
 from app.auth.models import User
 from app.auth.routes import router as auth_router
 from app.alerts.routes import router as alerts_router
+from app.admin.routes import router as admin_router
 from app.dashboard.routes import router
 
 
@@ -48,6 +49,7 @@ class DashboardService:
         self.app.include_router(router)
         self.app.include_router(auth_router)
         self.app.include_router(alerts_router)
+        self.app.include_router(admin_router)
 
         self._configure_pages()
 
@@ -81,6 +83,18 @@ class DashboardService:
                 context={
                     "telegram_bot_username": telegram_bot_username,
                 },
+            )
+
+        @self.app.get("/admin")
+        def admin_page(
+            request: Request,
+            _: User = Depends(get_current_admin),
+        ):
+            """Entrega o painel administrativo somente para admins."""
+
+            return self.templates.TemplateResponse(
+                request=request,
+                name="admin.html",
             )
 
         @self.app.get("/login")

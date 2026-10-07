@@ -74,6 +74,7 @@ def register(
         email=user.email,
         email_verified=user.email_verified,
         telegram_chat_id=user.telegram_chat_id,
+        role=user.role,
     )
 
 
@@ -187,6 +188,7 @@ def login(
         email=user.email,
         email_verified=user.email_verified,
         telegram_chat_id=user.telegram_chat_id,
+        role=user.role,
     )
 
 
@@ -240,4 +242,5 @@ def get_me(
         email=current_user.email,
         email_verified=current_user.email_verified,
         telegram_chat_id=current_user.telegram_chat_id,
+        role=current_user.role,
     )

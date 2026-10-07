@@ -3,6 +3,7 @@ const connectionIndicator = document.getElementById("connection-indicator");
 const connectionText = document.getElementById("connection-text");
 const currentUserName = document.getElementById("current-user-name");
 const logoutButton = document.getElementById("logout-button");
+const adminPanelButton = document.getElementById("admin-panel-button");
 
 let sensors = [];
 let selectedSensorId = null;
@@ -649,6 +650,10 @@ async function initializeDashboard() {
         }
 
         currentUserName.textContent = user.name;
+
+        if (adminPanelButton) {
+            adminPanelButton.classList.toggle("hidden", user.role !== "admin");
+        }
 
         sensorMap = new SensorMap("sensor-map");
 

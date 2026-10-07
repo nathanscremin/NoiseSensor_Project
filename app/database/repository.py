@@ -12,12 +12,12 @@ def sensor_belongs_to_user(
     sensor_id: int,
     user_id: int,
 ) -> bool:
-    """Verifica se um sensor pertence ao usuário informado."""
+    """Verifica se o sensor está associado ao usuário informado."""
 
     row = connection.execute(
         """
         SELECT 1
-        FROM sensors
+        FROM sensor_users
         WHERE sensor_id = %s
           AND user_id = %s;
         """,
@@ -41,8 +41,7 @@ def get_active_sensors(
             latitude,
             longitude,
             region,
-            status,
-            user_id
+            status
         FROM sensors
         WHERE status = 'active'
         ORDER BY sensor_id;
@@ -61,7 +60,6 @@ def get_active_sensors(
                 longitude=float(row[3]),
                 region=row[4],
                 status=row[5],
-                user_id=row[6],
             )
         )
 
@@ -306,7 +304,12 @@ def get_latest_sensor_readings(
         LEFT JOIN sensor_alert_states AS sas
             ON sas.sensor_id = s.sensor_id
         WHERE s.status = 'active'
-          AND s.user_id = %s
+          AND EXISTS (
+              SELECT 1
+              FROM sensor_users AS su
+              WHERE su.sensor_id = s.sensor_id
+                AND su.user_id = %s
+          )
         ORDER BY s.sensor_id;
     """
 

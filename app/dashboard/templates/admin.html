@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - NoiseSensor</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', path='css/dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/admin.css') }}">
+</head>
+
+<body>
+    <main class="dashboard admin-page">
+        <header class="dashboard-header admin-header">
+            <div>
+                <h1>Painel administrativo</h1>
+                <p>Gerenciamento de usuários e associações de sensores.</p>
+            </div>
+
+            <div class="dashboard-user-area">
+                <a class="admin-back-button" href="/">Dashboard</a>
+                <button id="admin-logout-button" class="logout-button" type="button">
+                    Sair
+                </button>
+            </div>
+        </header>
+
+        <section id="admin-message" class="admin-message hidden" aria-live="polite"></section>
+
+        <section class="admin-stats-grid" aria-label="Resumo administrativo">
+            <article class="admin-stat-card">
+                <span class="admin-stat-label">Usuários</span>
+                <strong id="stat-user-count">--</strong>
+            </article>
+
+            <article class="admin-stat-card">
+                <span class="admin-stat-label">Administradores</span>
+                <strong id="stat-admin-count">--</strong>
+            </article>
+
+            <article class="admin-stat-card">
+                <span class="admin-stat-label">Sensores</span>
+                <strong id="stat-sensor-count">--</strong>
+            </article>
+
+            <article class="admin-stat-card">
+                <span class="admin-stat-label">Sensores sem usuário</span>
+                <strong id="stat-unassigned-sensor-count">--</strong>
+            </article>
+        </section>
+
+        <section class="admin-card">
+            <div class="admin-section-heading">
+                <div>
+                    <h2>Usuários</h2>
+                    <p>Altere o cargo de outros membros e selecione um usuário para gerenciar seus sensores.</p>
+                </div>
+            </div>
+
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>E-mail</th>
+                            <th>Verificação</th>
+                            <th>Cargo</th>
+                            <th>Sensores</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <tr>
+                            <td colspan="6" class="admin-empty-state">Carregando usuários...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="admin-card">
+            <div class="admin-section-heading">
+                <div>
+                    <h2>Associação de sensores</h2>
+                    <p>Um sensor pode ser associado a vários usuários simultaneamente.</p>
+                </div>
+            </div>
+
+            <div class="assignment-layout">
+                <div class="assignment-user-panel">
+                    <label for="assignment-user">Usuário selecionado</label>
+                    <select id="assignment-user">
+                        <option value="">Selecione um usuário</option>
+                    </select>
+                    <p id="assignment-user-help" class="field-help">
+                        Escolha um usuário para editar suas associações.
+                    </p>
+                </div>
+
+                <div class="assignment-sensor-panel">
+                    <div id="assignment-sensor-list" class="sensor-checkbox-list">
+                        <p class="admin-empty-state">Selecione um usuário.</p>
+                    </div>
+
+                    <div class="admin-actions-row">
+                        <button id="save-assignments-button" class="primary-button" type="button" disabled>
+                            Salvar associações
+                        </button>
+                        <span id="assignment-message" class="form-message" aria-live="polite"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-card">
+            <div class="admin-section-heading">
+                <div>
+                    <h2>Histórico administrativo</h2>
+                    <p>Registros recentes de alterações feitas por administradores.</p>
+                </div>
+            </div>
+
+            <div class="admin-table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Administrador</th>
+                            <th>Ação</th>
+                            <th>Detalhes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-table-body">
+                        <tr>
+                            <td colspan="4" class="admin-empty-state">Carregando histórico...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', path='js/admin.js') }}"></script>
+</body>
+
+</html>

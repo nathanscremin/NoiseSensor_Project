@@ -49,6 +49,7 @@ class UserResponse(BaseModel):
     email: str
     email_verified: bool
     telegram_chat_id: int | None
+    role: str
 
 
 class MessageResponse(BaseModel):

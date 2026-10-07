@@ -15,3 +15,4 @@ class User:
     email_verified: bool
     telegram_chat_id: int | None
     created_at: datetime
+    role: str
